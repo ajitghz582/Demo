@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Examination History Export</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+    h1 { color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { background: #2c3e50; color: white; padding: 10px; text-align: left; }
+    td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+    tr:nth-child(even) { background: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <h1>Examination History</h1>
+  <p>Student: <strong>{{ username }}</strong></p>
+  <p>Total Examinations: {{ total_records }}</p>
+
+  <table>
+    <tr>
+      <th>Examination</th>
+      <th>Course</th>
+      <th>Type</th>
+      <th>Date</th>
+      <th>Examiner</th>
+      <th>Marks Obtained</th>
+      <th>Max Marks</th>
+      <th>Booking Status</th>
+    </tr>
+    {% for row in records %}
+    <tr>
+      <td>{{ row.exam_name }}</td>
+      <td>{{ row.course }}</td>
+      <td>{{ row.exam_type }}</td>
+      <td>{{ row.date }}</td>
+      <td>{{ row.examiner }}</td>
+      <td>{{ row.marks if row.marks is not none else 'N/A' }}</td>
+      <td>{{ row.max_marks }}</td>
+      <td>{{ row.booking_status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

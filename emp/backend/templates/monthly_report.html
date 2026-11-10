@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Monthly Examination Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+    h1 { color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { background: #2c3e50; color: white; padding: 10px; text-align: left; }
+    td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    .stat { display: inline-block; margin: 10px 20px 10px 0; padding: 15px 25px;
+            background: #ecf0f1; border-radius: 6px; text-align: center; }
+    .stat .num { font-size: 2em; font-weight: bold; color: #2c3e50; }
+    .stat .label { font-size: 0.85em; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Monthly Examination Report</h1>
+  <p>Generated on: {{ generated_on }}</p>
+
+  <div>
+    <div class="stat"><div class="num">{{ stats.total_exams }}</div><div class="label">Exams Conducted</div></div>
+    <div class="stat"><div class="num">{{ stats.total_evaluated }}</div><div class="label">Students Evaluated</div></div>
+    <div class="stat"><div class="num">{{ stats.total_completed }}</div><div class="label">Completed Bookings</div></div>
+    <div class="stat"><div class="num">{{ stats.pending_evaluations }}</div><div class="label">Pending Evaluations</div></div>
+  </div>
+
+  <h2>Most Active Examiners</h2>
+  <table>
+    <tr><th>Examiner</th><th>Slots Created</th><th>Students Evaluated</th></tr>
+    {% for e in active_examiners %}
+    <tr><td>{{ e.name }}</td><td>{{ e.slots }}</td><td>{{ e.evaluated }}</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Examination Summary</h2>
+  <table>
+    <tr><th>Exam</th><th>Course</th><th>Type</th><th>Bookings</th><th>Status</th></tr>
+    {% for exam in exams %}
+    <tr>
+      <td>{{ exam.name }}</td>
+      <td>{{ exam.course }}</td>
+      <td>{{ exam.type }}</td>
+      <td>{{ exam.bookings }}</td>
+      <td>{{ exam.status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

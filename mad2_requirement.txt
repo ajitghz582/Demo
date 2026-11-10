@@ -1,0 +1,342 @@
+Examination Management Portal - V2
+	Educational institutions require efficient systems to manage examinations involving administrators, examiners, and students. Many institutions still rely on spreadsheets, emails, and manual coordination, making it difficult to manage examination schedules, examiner availability, slot booking, evaluation rubrics, and result publication.
+You are required to build an Examination Management Portal (EMP) web application that allows Admin, Examiners, and Students to interact with the system based on their roles.
+
+
+Frameworks to be used
+These are the mandatory frameworks on which the project has to be built.
+	• Flask for API
+	• VueJS for UI
+	• VueJS Advanced with CLI (only if required, not necessary)
+	• Jinja2 templates if using CDN only for entry point (not to be used for UI)
+	• Bootstrap for HTML generation and styling (no other CSS framework is allowed)
+	• SQLite for database (no other database is permitted)
+	• Redis for caching
+	• Redis and Celery for batch jobs
+Note:
+	• All demos should be possible on your local machine.
+	• Any other framework/library will not be allowed apart from those given above.
+	• The database must be created programmatically (via table creation or model code).
+	• Manual database creation (e.g., DB Browser for SQLite) is NOT allowed.
+
+
+Roles & Functionalities
+This platform has three roles:
+	1. Admin
+	Admin is the pre-existing superuser of the application.
+		○ Can create, update and remove courses.
+		○ Can create, update and manage examinations.
+		○ Can create and manage examination rubrics.
+		○ Can add and manage examiners.
+		○ Can configure examination timelines.
+		○ Can open and close examiner slot creation.
+		○ Can open and close student slot booking.
+		○ Can view all examiner slots.
+		○ Can reschedule examination slots in exceptional situations.
+		○ Can change the assigned examiner if required.
+		○ Can view and manage all students, examiners and examinations.
+		○ Can search students, examiners, examinations and bookings.
+		○ Can publish examination results.
+		○ Can view examination reports and statistics.
+
+
+	2. Examiner
+		○ Can log in only after being created by Admin.
+		○ Can view assigned examinations.
+		○ Can create available examination slots during the slot creation period.
+		○ Can update or remove slots before student booking begins.
+		○ Can view students booked for their slots.
+		○ Can evaluate students using the predefined rubric.
+		○ Can submit marks and remarks.
+		○ Can update examination status.
+
+
+	3. Student
+		○ Can register, log in and update their profile.
+		○ Can view available examinations.
+		○ Can search and filter examinations.
+		○ Can book available examination slots.
+		○ Can view booking status.
+		○ Can cancel bookings before the booking deadline.
+		○ Can view examination history.
+		○ Can view published results and examiner feedback.
+
+
+Key Terminologies
+	1. Admin: A user with the highest level of access who manages the entire examination system.
+	2. Examiner: A faculty member responsible for creating examination slots, conducting examinations and evaluating students.
+	3. Student: A registered user who books examination slots and appears for examinations.
+	4. Course: A course under which one or more examinations are conducted.
+		Attributes: 
+				□ Course ID
+				□ Course Code
+				□ Course Name
+				□ Description
+				□ Status
+				□ Extra fields etc.
+	
+	5. Examination: An examination created by the Admin for a particular course.
+		Attributes:
+				□ Exam ID
+				□ Course ID
+				□ Examination Name
+				□ Examination Type (Viva / Practical / Project Demo / Assessment)
+				□ Duration
+				□ Maximum Marks
+				□ Slot Creation Start Date
+				□ Slot Creation End Date
+				□ Slot Booking Start Date
+				□ Slot Booking End Date
+				□ Examination Status (Draft / Slot Creation / Booking Open / Closed / Completed)
+				□ Extra fields etc.
+	
+	6. Examination Rubric: Evaluation criteria used by examiners during assessment.
+		Attributes:
+				□ Rubric ID
+				□ Examination ID
+				□ Criterion Name
+				□ Maximum Marks
+				□ Weightage
+				□ Description
+				□ Extra fields etc.
+	
+	7. Examination Slot: A time slot created by an examiner for a particular examination.
+		Attributes
+				□ Slot ID
+				□ Examination ID
+				□ Examiner ID
+				□ Date
+				□ Start Time
+				□ End Time
+				□ Maximum Student Capacity
+				□ Available Seats
+				□ Status (Available / Full / Cancelled / Completed)
+				□ Meeting Link (Optional)
+				□ Extra fields etc.
+				
+	8. Booking: A record of a student booking an examination slot.
+		Attributes
+				□ Booking ID
+				□ Student ID
+				□ Slot ID
+				□ Booking Date
+				□ Status (Booked / Cancelled / Completed)
+				□ Extra fields etc.
+	
+	9. Evaluation: A record of the student's examination evaluation.
+		Attributes
+				□ Evaluation ID
+				□ Booking ID
+				□ Student ID
+				□ Examiner ID
+				□ Total Marks
+				□ Remarks
+				□ Evaluation Date
+				□ Status
+				□ Extra fields etc.
+	
+	10. Examiner Profile: Details of a registered examiner.
+		Attributes
+				□ Examiner ID
+				□ Name
+				□ Contact Details
+				□ Department
+				□ Status
+				□ Extra fields etc.
+
+
+Note: The above tables and fields are not exhaustive. Students can add more/less tables and fields as required.
+
+
+Similar Apps
+	• Moodle
+	• Canvas LMS
+	• Google Classroom
+	• Microsoft Teams Assignments
+	• HackerRank Assessments
+
+
+Application Wireframe
+Mad2-examination-wireframe.png
+Note:
+The provided wireframe is intended only to illustrate the application's flow and demonstrate navigation.
+	• Replication of exact UI is NOT mandatory.
+	• Students are encouraged to design their own UI while maintaining the application's intended functionality and flow.
+
+
+Core Features
+	• Authentication
+		○ Login/Register for Students.
+		○ Login only for Admin and Examiners (no registration).
+		○ Only one Admin must exist and should be created programmatically.
+		○ Role-based access control and authentication using Flask Security (Session/Token) or JWT based Token.
+		○ A unified user model to differentiate all types of user roles.
+
+
+	• Admin Functionalities
+	Admin dashboard showing:
+		○ Total number of courses.
+		○ Total number of examinations.
+		○ Total number of students and examiners.
+		○ Total number of examination slots.
+		○ Total number of bookings.
+	Admin must pre-exist and be created programmatically after database creation. [No admin registration allowed]
+	Admin can:
+		○ Create and manage courses.
+		○ Create and manage examinations.
+		○ Create examination rubrics.
+		○ Add new examiners.
+		○ Open and close examiner slot creation.
+		○ Open and close student slot booking.
+		○ View all examiner slots.
+		○ View all bookings.
+		○ Search students, examiners, examinations and bookings.
+		○ Reschedule examination bookings when required.
+		○ Reassign students to another examiner if necessary.
+		○ Publish examination results.
+
+
+	• Examiner Functionalities
+		Examiner dashboard should display:
+				□ Assigned examinations.
+				□ Created examination slots.
+				□ Number of booked students.
+				□ Pending evaluations.
+		Examiner can:
+				□ Create examination slots.
+				□ Update slots before booking starts.
+				□ View booked students.
+				□ Evaluate students using rubrics.
+				□ Submit marks and remarks.
+				□ Mark examination as completed.
+
+
+	• Student Functionalities
+		Students must self-register and log in.
+		Student dashboard should display:
+				□ Available examinations.
+				□ Available slots.
+				□ Upcoming examinations.
+				□ Booked examination slots.
+				□ Published results.
+		Students can:
+				□ Book examination slots.
+				□ Cancel bookings before the deadline.
+				□ View booking history.
+				□ View examination status.
+				□ View evaluation remarks.
+				□ Edit profile.
+				□ Search examinations.
+
+
+	• Backend Jobs (Using Celery)
+	a. Scheduled Job – Daily Examination Reminder - The application should send daily reminders to students on Google Chat using Webhooks or SMS or Email.
+		○ Send reminders containing:
+					® Examination name.
+					® Date and time.
+					® Assigned examiner.
+					® Examination instructions.
+		○ Runs daily at a chosen time.
+
+	
+	b. Scheduled Job – Monthly Examination Report - Devise a monthly report for the Admin created using HTML and sent via mail.
+		○ Generate monthly examination statistics including:
+					® Number of examinations conducted.
+					® Number of students evaluated.
+					® Number of completed bookings.
+					® Pending evaluations.
+					® Most active examiners.
+		○ Generated on the first day of every month.
+		○ Sent to Admin via Email (HTML or PDF).
+
+	
+	c. User Triggered Async Job – Export Examination History as CSV
+		○ Students can export their examination history.
+		○ CSV should include:
+					® Student ID
+					® Examination Name
+					® Course
+					® Examination Date
+					® Examiner
+					® Marks Obtained
+					® Booking Status
+		○ Triggered from the student dashboard.
+		○ This should trigger a batch job and send an alert once completed.
+
+
+	• Performance and Caching
+		○ Use Redis caching for:
+					® Frequently accessed examinations.
+					® Examination schedules.
+					® Examination rubrics.
+		○ Implement cache expiry.
+		○ Optimize API response times.
+
+
+	• Other Core Functionalities
+		○ Examiners can create slots only during the slot creation period.
+		○ Students can book slots only during the booking period.
+		○ Students can book only one slot per examination.
+		○ Prevent overbooking beyond slot capacity.
+		○ Automatically mark slots as Full when capacity is reached.
+		○ Examiners can evaluate only students booked into their slots.
+		○ Admin can reschedule bookings when required.
+		○ Admin can change the assigned examiner in exceptional situations.
+		○ Prevent duplicate bookings for the same examination.
+		○ Maintain complete examination and evaluation history.
+		○ Allow searching and filtering of examinations.
+		○ Allow Admin to view all historical examination data.
+
+
+Recommended and/or Optional Functionalities
+	• Well-designed PDF reports for Monthly examination reports (You can choose between HTML and PDF reports).
+	• Charts for analytics (popular examinations, examiner workload, booking trends) using ChartJS.
+	• Single Responsive UI for both Mobile and Desktop
+		○ Unified UI that works across devices
+		○ Add to desktop feature
+	• Implement frontend validation on all form fields using HTML5 validation or JavaScript.
+	• Implement backend validation within your APIs.
+	• Provide styling and aesthetics using Bootstrap.
+	• Notifications for successful slot booking or cancellation.
+	• Email notifications for result publication.
+	• Downloadable examination scorecard.
+	• Any additional feature relevant to examination management systems.
+Evaluation
+	1. Students have to create and submit a project report (not more than 5 pages) on the portal, along with the actual project submission
+	2. The report must include the following things;
+		1. Student details
+		2. Project details, including the question statement and how you approached the problem statement
+		3. AI/LLM Declaration
+		4. Frameworks and libraries used
+		5. ER diagram of your database, including all the tables and their relations
+		6. API resource endpoints (if any)
+		7. Drive link of the presentation video
+	3. If a student has used any form of AI/LLM for the project, you will need to mention the extent of use in your report, (click here for the doc)
+Note: Usage of AL/LLM/coding agents will be considered only if students showcase basic understanding of the code submitted.
+	4. You can find a template to create the project report (click here for project report demo)
+
+
+Possible folder structure:
+
+
+
+
+	5. All code is to be submitted on the portal in a single zip file (zipping instructions are given in the project document - Project Doc T12026
+
+	6. Video Presentation Guidelines (Advised):
+		1. A short intro (not more than 30 sec)
+		2. How did you approach the problem statement? (30 sec)
+		3. Highlight key features of the application (90 sec)
+		4. Any additional feature(s) implemented other than core requirements (30 sec)
+
+	Note:
+		1. The final video must not exceed 5-10 minutes.
+		2. Keeping your video feed on during recording (like in a screencast) is optional but recommended.
+	
+	7. The video must be uploaded on the student drive with access to anyone with the link and the link must be included in the report:
+		1. This will be viewed during or before the viva, so it should be a clear explanation of your work.
+	8. Viva: After the video explanation, you are required to give a demo of your work, and answer any questions that the examiner asks:
+		1. This includes making changes as requested and running the code for a live demo.
+		2. Other questions may be unrelated to the project itself, but are relevant to the course.
+
+From <https://docs.google.com/document/d/e/2PACX-1vRS-AUGWCZOMZ5RCdBVi682YIbMXjhKazVgkJowTgIilmKuIl185qu2_K6dq2HozN_gBdc01nzp_KXI/pub> 
