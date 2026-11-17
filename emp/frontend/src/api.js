@@ -49,6 +49,8 @@ export const api = {
   updateSlot: (id, d) => axios.put(`/api/examiner/slots/${id}`, d, { headers: authHeaders() }),
   deleteSlot: (id) => axios.delete(`/api/examiner/slots/${id}`, { headers: authHeaders() }),
   slotStudents: (sid) => axios.get(`/api/examiner/slots/${sid}/students`, { headers: authHeaders() }),
+  getBookingRubrics: (bookingId) => axios.get(`/api/examiner/booking/${bookingId}/rubrics`, { headers: authHeaders() }),
+  saveCriterionScore: (bookingId, d) => axios.post(`/api/examiner/evaluate/${bookingId}/criterion`, d, { headers: authHeaders() }),
   submitEvaluation: (bookingId, d) => axios.post(`/api/examiner/evaluate/${bookingId}`, d, { headers: authHeaders() }),
 
   // Student

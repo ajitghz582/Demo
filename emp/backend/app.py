@@ -10,7 +10,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, time
 
 from model import (db, User, ExaminerProfile, Course, Examination,
-                   ExaminerAssignment, ExaminationRubric, ExaminationSlot, Booking, Evaluation)
+                   ExaminerAssignment, ExaminationRubric, ExaminationSlot,
+                   Booking, Evaluation, EvaluationCriterionScore)
 
 app = Flask(__name__)
 
@@ -745,9 +746,94 @@ def examiner_slot_students(sid):
     return jsonify(result), 200
 
 
+@app.route("/api/examiner/booking/<int:booking_id>/rubrics", methods=["GET"])
+@jwt_required()
+def examiner_booking_rubrics(booking_id):
+    """Return rubric criteria for a booking's exam, with any existing awarded marks."""
+    err = require_role("examiner")
+    if err:
+        return err
+    examiner_id = int(get_jwt_identity())
+    b = db.get_or_404(Booking, booking_id)
+    slot = ExaminationSlot.query.get(b.slot_id)
+    if not slot or slot.examiner_id != examiner_id:
+        return jsonify({"error": "You are not the examiner for this booking"}), 403
+    exam = Examination.query.get(slot.exam_id)
+    if not exam:
+        return jsonify({"error": "Examination not found"}), 404
+    rubrics = ExaminationRubric.query.filter_by(exam_id=exam.id).all()
+    ev = Evaluation.query.filter_by(booking_id=booking_id).first()
+    # Map existing scores by rubric_id
+    scores = {}
+    if ev:
+        for cs in ev.criterion_scores:
+            scores[cs.rubric_id] = cs.awarded_marks
+    result = []
+    for r in rubrics:
+        result.append({
+            "rubric_id": r.id,
+            "criterion_name": r.criterion_name,
+            "max_marks": r.max_marks,
+            "weightage": r.weightage,
+            "description": r.description,
+            "awarded_marks": scores.get(r.id, 0.0),
+        })
+    existing_remarks = ev.remarks if ev else ""
+    return jsonify({"rubrics": result, "remarks": existing_remarks}), 200
+
+
+@app.route("/api/examiner/evaluate/<int:booking_id>/criterion", methods=["POST"])
+@jwt_required()
+def examiner_save_criterion(booking_id):
+    """Save awarded marks for a single rubric criterion."""
+    err = require_role("examiner")
+    if err:
+        return err
+    examiner_id = int(get_jwt_identity())
+    b = db.get_or_404(Booking, booking_id)
+    slot = ExaminationSlot.query.get(b.slot_id)
+    if not slot or slot.examiner_id != examiner_id:
+        return jsonify({"error": "You are not the examiner for this booking"}), 403
+    if b.status == "Cancelled":
+        return jsonify({"error": "Cannot evaluate a cancelled booking"}), 400
+    data = request.get_json()
+    rubric_id = data.get("rubric_id")
+    awarded = float(data.get("awarded_marks", 0))
+    rubric = ExaminationRubric.query.get(rubric_id)
+    if not rubric:
+        return jsonify({"error": "Rubric not found"}), 404
+    if awarded > rubric.max_marks:
+        return jsonify({"error": f"Awarded marks exceed maximum ({rubric.max_marks})"}), 400
+    # Ensure evaluation record exists
+    ev = Evaluation.query.filter_by(booking_id=booking_id).first()
+    if not ev:
+        ev = Evaluation(
+            booking_id=booking_id,
+            student_id=b.student_id,
+            examiner_id=examiner_id,
+            total_marks=0.0,
+            remarks="",
+            status="Pending"
+        )
+        db.session.add(ev)
+        db.session.flush()
+    # Upsert criterion score
+    cs = EvaluationCriterionScore.query.filter_by(
+        evaluation_id=ev.id, rubric_id=rubric_id).first()
+    if cs:
+        cs.awarded_marks = awarded
+    else:
+        cs = EvaluationCriterionScore(
+            evaluation_id=ev.id, rubric_id=rubric_id, awarded_marks=awarded)
+        db.session.add(cs)
+    db.session.commit()
+    return jsonify({"message": "Score saved", "awarded_marks": awarded}), 200
+
+
 @app.route("/api/examiner/evaluate/<int:booking_id>", methods=["POST"])
 @jwt_required()
 def examiner_evaluate(booking_id):
+    """Submit final evaluation — sums criterion scores into total_marks."""
     err = require_role("examiner")
     if err:
         return err
@@ -760,8 +846,12 @@ def examiner_evaluate(booking_id):
         return jsonify({"error": "Cannot evaluate a cancelled booking"}), 400
     data = request.get_json()
     ev = Evaluation.query.filter_by(booking_id=booking_id).first()
+    # Sum criterion scores if present, otherwise fall back to manual total_marks
+    total = sum(cs.awarded_marks for cs in ev.criterion_scores) if ev and ev.criterion_scores else None
+    if total is None:
+        total = float(data.get("total_marks", 0))
     if ev:
-        ev.total_marks = float(data.get("total_marks", ev.total_marks))
+        ev.total_marks = total
         ev.remarks = data.get("remarks", ev.remarks)
         ev.eval_date = datetime.utcnow()
     else:
@@ -769,14 +859,14 @@ def examiner_evaluate(booking_id):
             booking_id=booking_id,
             student_id=b.student_id,
             examiner_id=examiner_id,
-            total_marks=float(data.get("total_marks", 0)),
+            total_marks=total,
             remarks=data.get("remarks", ""),
             status="Pending"
         )
         db.session.add(ev)
-        b.status = "Completed"
+    b.status = "Completed"
     db.session.commit()
-    return jsonify({"message": "Evaluation saved"}), 200
+    return jsonify({"message": "Evaluation submitted", "total_marks": total}), 200
 
 
 @app.route("/api/examiner/dashboard", methods=["GET"])

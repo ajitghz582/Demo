@@ -113,3 +113,16 @@ class Evaluation(db.Model):
     remarks = db.Column(db.Text)
     eval_date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='Pending')  # Pending / Published
+
+    criterion_scores = db.relationship('EvaluationCriterionScore', backref='evaluation',
+                                       lazy=True, cascade='all, delete-orphan')
+
+
+class EvaluationCriterionScore(db.Model):
+    """Stores per-criterion awarded marks for a rubric-based evaluation."""
+    id = db.Column(db.Integer, primary_key=True)
+    evaluation_id = db.Column(db.Integer, db.ForeignKey('evaluation.id'), nullable=False)
+    rubric_id = db.Column(db.Integer, db.ForeignKey('examination_rubric.id'), nullable=False)
+    awarded_marks = db.Column(db.Float, nullable=False, default=0.0)
+
+    __table_args__ = (db.UniqueConstraint('evaluation_id', 'rubric_id', name='uq_eval_rubric'),)

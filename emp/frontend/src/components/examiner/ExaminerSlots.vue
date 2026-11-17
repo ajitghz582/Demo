@@ -17,9 +17,11 @@
           <td>{{ s.capacity }}</td>
           <td>{{ s.available_seats }}</td>
           <td><span class="badge" :class="slotClass(s.status)">{{ s.status }}</span></td>
-          <td class="d-flex gap-1">
+          <td class="d-flex gap-1 flex-wrap">
             <button class="btn btn-sm btn-outline-primary" @click="edit(s)">Edit</button>
             <button class="btn btn-sm btn-outline-info" @click="viewStudents(s)">Students ({{ s.booked_count }})</button>
+            <button class="btn btn-sm btn-outline-success" @click="$emit('go-marking', s.id)"
+                    :disabled="s.booked_count === 0">Marking</button>
             <button class="btn btn-sm btn-outline-danger" @click="remove(s.id)">Delete</button>
           </td>
         </tr>
@@ -84,8 +86,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { api } from '../../api.js'
+
+const props = defineProps({ prefillExam: { type: Object, default: null } })
+const emit = defineEmits(['slot-created', 'go-marking'])
 
 const slots = ref([])
 const exams = ref([])
@@ -99,8 +104,15 @@ onMounted(async () => {
     const [sRes, eRes] = await Promise.all([api.examinerSlots(), api.examinerExams()])
     slots.value = sRes.data
     exams.value = eRes.data
-    // Add booked_count to slots (api already includes it, just ensure consistent)
   } catch {}
+  // If navigated here from "Add Slot" button, open create form pre-filled
+  if (props.prefillExam) {
+    openCreate(props.prefillExam.id)
+  }
+})
+
+watch(() => props.prefillExam, (exam) => {
+  if (exam) openCreate(exam.id)
 })
 
 async function loadSlots() {
@@ -113,8 +125,8 @@ function examName(id) {
   return exams.value.find(e => e.id === id)?.name || `Exam #${id}`
 }
 
-function openCreate() {
-  Object.assign(form.value, { show: true, id: null, exam_id: '', date: '', start_time: '', end_time: '', capacity: 1, meeting_link: '' })
+function openCreate(examId = '') {
+  Object.assign(form.value, { show: true, id: null, exam_id: examId || '', date: '', start_time: '', end_time: '', capacity: 1, meeting_link: '' })
   formError.value = ''
 }
 
@@ -127,7 +139,10 @@ async function save() {
   formError.value = ''
   try {
     if (form.value.id) await api.updateSlot(form.value.id, form.value)
-    else await api.createSlot(form.value)
+    else {
+      await api.createSlot(form.value)
+      emit('slot-created')
+    }
     form.value.show = false
     msg.value = 'Saved!'
     setTimeout(() => msg.value = '', 2000)

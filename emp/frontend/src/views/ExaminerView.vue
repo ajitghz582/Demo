@@ -19,12 +19,24 @@
       <ul class="nav nav-tabs mb-3">
         <li class="nav-item" v-for="t in tabs" :key="t.key">
           <a class="nav-link" :class="{ active: activeTab === t.key }"
-             href="#" @click.prevent="activeTab = t.key">{{ t.label }}</a>
+             href="#" @click.prevent="switchTab(t.key)">{{ t.label }}</a>
         </li>
       </ul>
 
-      <ExaminerSlots v-if="activeTab === 'slots'" />
-      <ExaminerEvaluate v-if="activeTab === 'evaluate'" />
+      <ExaminerAssignedExams
+        v-if="activeTab === 'assigned'"
+        @create-slot="goCreateSlot"
+      />
+      <ExaminerSlots
+        v-if="activeTab === 'slots'"
+        :prefill-exam="prefillExam"
+        @slot-created="prefillExam = null"
+        @go-marking="goMarking"
+      />
+      <ExaminerEvaluate
+        v-if="activeTab === 'evaluate'"
+        :prefill-slot-id="prefillSlotId"
+      />
     </div>
   </div>
 </template>
@@ -33,14 +45,19 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api.js'
+import ExaminerAssignedExams from '../components/examiner/ExaminerAssignedExams.vue'
 import ExaminerSlots from '../components/examiner/ExaminerSlots.vue'
 import ExaminerEvaluate from '../components/examiner/ExaminerEvaluate.vue'
 
 const router = useRouter()
 const username = localStorage.getItem('username')
 const stats = ref(null)
-const activeTab = ref('slots')
+const activeTab = ref('assigned')
+const prefillExam = ref(null)
+const prefillSlotId = ref(null)
+
 const tabs = [
+  { key: 'assigned', label: 'Assigned Exams' },
   { key: 'slots', label: 'My Slots' },
   { key: 'evaluate', label: 'Evaluate Students' },
 ]
@@ -51,6 +68,23 @@ onMounted(async () => {
     stats.value = res.data
   } catch {}
 })
+
+function switchTab(key) {
+  // Clear prefill state when user navigates manually (not via a shortcut button)
+  if (key !== 'slots') prefillExam.value = null
+  if (key !== 'evaluate') prefillSlotId.value = null
+  activeTab.value = key
+}
+
+function goCreateSlot(exam) {
+  prefillExam.value = exam
+  activeTab.value = 'slots'
+}
+
+function goMarking(slotId) {
+  prefillSlotId.value = slotId
+  activeTab.value = 'evaluate'
+}
 
 function logout() {
   localStorage.clear()
