@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import (JWTManager, create_access_token,
@@ -8,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, time
 
 from model import (db, User, ExaminerProfile, Course, Examination,
-                   ExaminationRubric, ExaminationSlot, Booking, Evaluation)
+                   ExaminerAssignment, ExaminationRubric, ExaminationSlot, Booking, Evaluation)
 
 app = Flask(__name__)
 
@@ -120,7 +122,7 @@ def login():
         return jsonify({"error": "Invalid credentials"}), 401
     if not user.active:
         return jsonify({"error": "Account is inactive"}), 403
-    token = create_access_token(identity=user.id,
+    token = create_access_token(identity=str(user.id),
                                 additional_claims={"role": user.role})
     return jsonify({
         "access_token": token,
@@ -193,7 +195,7 @@ def admin_course_detail(cid):
     err = require_role("admin")
     if err:
         return err
-    c = Course.query.get_or_404(cid)
+    c = db.get_or_404(Course, cid)
     if request.method == "DELETE":
         db.session.delete(c)
         db.session.commit()
@@ -279,7 +281,7 @@ def admin_examination_detail(eid):
     err = require_role("admin")
     if err:
         return err
-    e = Examination.query.get_or_404(eid)
+    e = db.get_or_404(Examination, eid)
     if request.method == "GET":
         return jsonify(exam_to_dict(e)), 200
     if request.method == "DELETE":
@@ -311,7 +313,7 @@ def admin_publish_results(eid):
     err = require_role("admin")
     if err:
         return err
-    e = Examination.query.get_or_404(eid)
+    e = db.get_or_404(Examination, eid)
     # Mark all Pending evaluations for this exam's bookings as Published
     slots = ExaminationSlot.query.filter_by(exam_id=eid).all()
     count = 0
@@ -335,7 +337,7 @@ def admin_rubrics(eid):
     err = require_role("admin")
     if err:
         return err
-    Examination.query.get_or_404(eid)
+    db.get_or_404(Examination, eid)
     if request.method == "GET":
         rubrics = ExaminationRubric.query.filter_by(exam_id=eid).all()
         return jsonify([{
@@ -364,7 +366,7 @@ def admin_rubric_detail(rid):
     err = require_role("admin")
     if err:
         return err
-    r = ExaminationRubric.query.get_or_404(rid)
+    r = db.get_or_404(ExaminationRubric, rid)
     if request.method == "DELETE":
         db.session.delete(r)
         db.session.commit()
@@ -447,6 +449,60 @@ def admin_examiner_detail(uid):
 
 
 # ─────────────────────────────────────────────────────────────
+# Admin — Examiner Assignments
+# ─────────────────────────────────────────────────────────────
+
+@app.route("/api/admin/examinations/<int:eid>/examiners", methods=["GET", "POST", "DELETE"])
+@jwt_required()
+def admin_exam_examiners(eid):
+    err = require_role("admin")
+    if err:
+        return err
+    db.get_or_404(Examination, eid)
+
+    if request.method == "GET":
+        assignments = ExaminerAssignment.query.filter_by(exam_id=eid).all()
+        result = []
+        for a in assignments:
+            u = User.query.get(a.examiner_id)
+            result.append({
+                "assignment_id": a.id,
+                "examiner_id": a.examiner_id,
+                "username": u.username if u else None,
+                "email": u.email if u else None,
+                "assigned_at": a.assigned_at.isoformat() if a.assigned_at else None,
+            })
+        return jsonify(result), 200
+
+    if request.method == "POST":
+        data = request.get_json()
+        examiner_id = data.get("examiner_id")
+        if not examiner_id:
+            return jsonify({"error": "examiner_id required"}), 400
+        examiner = User.query.filter_by(id=examiner_id, role="examiner").first()
+        if not examiner:
+            return jsonify({"error": "Examiner not found"}), 404
+        if ExaminerAssignment.query.filter_by(exam_id=eid, examiner_id=examiner_id).first():
+            return jsonify({"error": "Examiner already assigned to this examination"}), 409
+        a = ExaminerAssignment(exam_id=eid, examiner_id=examiner_id)
+        db.session.add(a)
+        db.session.commit()
+        return jsonify({"message": "Examiner assigned", "assignment_id": a.id}), 201
+
+    # DELETE — remove assignment by examiner_id in body
+    data = request.get_json()
+    examiner_id = data.get("examiner_id")
+    if not examiner_id:
+        return jsonify({"error": "examiner_id required"}), 400
+    a = ExaminerAssignment.query.filter_by(exam_id=eid, examiner_id=examiner_id).first()
+    if not a:
+        return jsonify({"error": "Assignment not found"}), 404
+    db.session.delete(a)
+    db.session.commit()
+    return jsonify({"message": "Examiner unassigned"}), 200
+
+
+# ─────────────────────────────────────────────────────────────
 # Admin — Students
 # ─────────────────────────────────────────────────────────────
 
@@ -510,12 +566,12 @@ def admin_reschedule(bid):
     err = require_role("admin")
     if err:
         return err
-    b = Booking.query.get_or_404(bid)
+    b = db.get_or_404(Booking, bid)
     data = request.get_json()
     new_slot_id = data.get("new_slot_id")
     if not new_slot_id:
         return jsonify({"error": "new_slot_id required"}), 400
-    new_slot = ExaminationSlot.query.get_or_404(new_slot_id)
+    new_slot = db.get_or_404(ExaminationSlot, new_slot_id)
     if new_slot.available_seats <= 0:
         return jsonify({"error": "New slot has no available seats"}), 400
 
@@ -541,7 +597,7 @@ def admin_reassign_examiner(bid):
     err = require_role("admin")
     if err:
         return err
-    b = Booking.query.get_or_404(bid)
+    b = db.get_or_404(Booking, bid)
     data = request.get_json()
     new_examiner_id = data.get("examiner_id")
     if not new_examiner_id:
@@ -564,15 +620,13 @@ def examiner_examinations():
     err = require_role("examiner")
     if err:
         return err
-    examiner_id = get_jwt_identity()
-    # Return exams with existing slots + all "Slot Creation" exams (so examiner can create new slots)
-    slot_exam_ids = db.session.query(ExaminationSlot.exam_id)\
-        .filter_by(examiner_id=examiner_id).distinct().all()
-    existing_ids = [r[0] for r in slot_exam_ids]
-    slot_creation_exams = Examination.query.filter_by(status="Slot Creation").all()
-    slot_creation_ids = [e.id for e in slot_creation_exams]
-    all_ids = list(set(existing_ids + slot_creation_ids))
-    exams = Examination.query.filter(Examination.id.in_(all_ids)).all() if all_ids else []
+    examiner_id = int(get_jwt_identity())
+    # Only return exams the admin has explicitly assigned this examiner to
+    assigned_exam_ids = [
+        a.exam_id for a in ExaminerAssignment.query.filter_by(examiner_id=examiner_id).all()
+    ]
+    exams = Examination.query.filter(Examination.id.in_(assigned_exam_ids)).all() \
+        if assigned_exam_ids else []
     return jsonify([exam_to_dict(e) for e in exams]), 200
 
 
@@ -582,7 +636,7 @@ def examiner_slots():
     err = require_role("examiner")
     if err:
         return err
-    examiner_id = get_jwt_identity()
+    examiner_id = int(get_jwt_identity())
     if request.method == "GET":
         slots = ExaminationSlot.query.filter_by(examiner_id=examiner_id).all()
         result = []
@@ -596,6 +650,8 @@ def examiner_slots():
     exam = Examination.query.get(data.get("exam_id"))
     if not exam:
         return jsonify({"error": "Examination not found"}), 404
+    if not ExaminerAssignment.query.filter_by(exam_id=exam.id, examiner_id=examiner_id).first():
+        return jsonify({"error": "You are not assigned to this examination"}), 403
     if exam.status != "Slot Creation":
         return jsonify({"error": "Slot creation is not open for this examination"}), 403
 
@@ -629,7 +685,7 @@ def examiner_slot_detail(sid):
     err = require_role("examiner")
     if err:
         return err
-    examiner_id = get_jwt_identity()
+    examiner_id = int(get_jwt_identity())
     s = ExaminationSlot.query.filter_by(id=sid, examiner_id=examiner_id).first()
     if not s:
         return jsonify({"error": "Slot not found or not yours"}), 404
@@ -668,7 +724,7 @@ def examiner_slot_students(sid):
     err = require_role("examiner")
     if err:
         return err
-    examiner_id = get_jwt_identity()
+    examiner_id = int(get_jwt_identity())
     slot = ExaminationSlot.query.filter_by(id=sid, examiner_id=examiner_id).first()
     if not slot:
         return jsonify({"error": "Slot not found or not yours"}), 404
@@ -695,8 +751,8 @@ def examiner_evaluate(booking_id):
     err = require_role("examiner")
     if err:
         return err
-    examiner_id = get_jwt_identity()
-    b = Booking.query.get_or_404(booking_id)
+    examiner_id = int(get_jwt_identity())
+    b = db.get_or_404(Booking, booking_id)
     slot = ExaminationSlot.query.get(b.slot_id)
     if not slot or slot.examiner_id != examiner_id:
         return jsonify({"error": "You are not the examiner for this booking"}), 403
@@ -729,7 +785,7 @@ def examiner_dashboard():
     err = require_role("examiner")
     if err:
         return err
-    examiner_id = get_jwt_identity()
+    examiner_id = int(get_jwt_identity())
     slots = ExaminationSlot.query.filter_by(examiner_id=examiner_id).all()
     slot_ids = [s.id for s in slots]
     booked = Booking.query.filter(Booking.slot_id.in_(slot_ids), Booking.status == "Booked").count()
@@ -739,9 +795,9 @@ def examiner_dashboard():
     ).outerjoin(Evaluation, Booking.id == Evaluation.booking_id)\
      .filter(Evaluation.id == None).count()
 
-    slot_exam_ids = list({s.exam_id for s in slots})
+    assigned_exams = ExaminerAssignment.query.filter_by(examiner_id=examiner_id).count()
     return jsonify({
-        "assigned_exams": len(slot_exam_ids),
+        "assigned_exams": assigned_exams,
         "total_slots": len(slots),
         "booked_students": booked,
         "pending_evaluations": pending_evals,
@@ -776,7 +832,7 @@ def student_slots(exam_id):
     err = require_role("student")
     if err:
         return err
-    exam = Examination.query.get_or_404(exam_id)
+    exam = db.get_or_404(Examination, exam_id)
     if exam.status != "Booking Open":
         return jsonify({"error": "Booking is not open for this examination"}), 403
     slots = ExaminationSlot.query.filter_by(exam_id=exam_id, status="Available").all()
@@ -789,7 +845,7 @@ def student_bookings():
     err = require_role("student")
     if err:
         return err
-    student_id = get_jwt_identity()
+    student_id = int(get_jwt_identity())
 
     if request.method == "GET":
         bookings = Booking.query.filter_by(student_id=student_id).all()
@@ -800,7 +856,7 @@ def student_bookings():
     if not slot_id:
         return jsonify({"error": "slot_id required"}), 400
 
-    slot = ExaminationSlot.query.get_or_404(slot_id)
+    slot = db.get_or_404(ExaminationSlot, slot_id)
     exam = Examination.query.get(slot.exam_id)
 
     # Validate booking period
@@ -840,7 +896,7 @@ def student_cancel_booking(bid):
     err = require_role("student")
     if err:
         return err
-    student_id = get_jwt_identity()
+    student_id = int(get_jwt_identity())
     b = Booking.query.filter_by(id=bid, student_id=student_id).first()
     if not b:
         return jsonify({"error": "Booking not found"}), 404
@@ -866,7 +922,7 @@ def student_results():
     err = require_role("student")
     if err:
         return err
-    student_id = get_jwt_identity()
+    student_id = int(get_jwt_identity())
     evals = Evaluation.query.filter_by(student_id=student_id, status="Published").all()
     result = []
     for ev in evals:
@@ -894,8 +950,8 @@ def student_profile():
     err = require_role("student")
     if err:
         return err
-    student_id = get_jwt_identity()
-    u = User.query.get_or_404(student_id)
+    student_id = int(get_jwt_identity())
+    u = db.get_or_404(User, student_id)
     if request.method == "GET":
         return jsonify({"id": u.id, "username": u.username, "email": u.email}), 200
     data = request.get_json()
@@ -913,7 +969,7 @@ def student_export():
     err = require_role("student")
     if err:
         return err
-    student_id = get_jwt_identity()
+    student_id = int(get_jwt_identity())
     from tasks import export_exam_history
     export_exam_history.delay(student_id)
     return jsonify({"message": "Export started — you will receive an email when ready"}), 200
@@ -925,7 +981,7 @@ def student_dashboard():
     err = require_role("student")
     if err:
         return err
-    student_id = get_jwt_identity()
+    student_id = int(get_jwt_identity())
     bookings = Booking.query.filter_by(student_id=student_id).all()
     upcoming = [b for b in bookings if b.status == "Booked"]
     published_results = Evaluation.query.filter_by(

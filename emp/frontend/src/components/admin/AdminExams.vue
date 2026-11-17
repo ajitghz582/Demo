@@ -19,6 +19,7 @@
           <td class="d-flex gap-1 flex-wrap">
             <button class="btn btn-sm btn-outline-primary" @click="edit(e)">Edit</button>
             <button class="btn btn-sm btn-outline-secondary" @click="manageRubrics(e)">Rubrics</button>
+            <button class="btn btn-sm btn-outline-warning" @click="manageAssignments(e)">Examiners</button>
             <button class="btn btn-sm btn-outline-success" @click="publish(e.id)">Publish</button>
             <button class="btn btn-sm btn-outline-danger" @click="remove(e.id)">Delete</button>
           </td>
@@ -85,6 +86,38 @@
       </div></div>
     </div>
 
+    <!-- Examiner Assignment Modal -->
+    <div v-if="assignModal.show" class="modal d-block" style="background:rgba(0,0,0,.4)">
+      <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Assigned Examiners — {{ assignModal.examName }}</h5>
+          <button class="btn-close" @click="assignModal.show=false"></button>
+        </div>
+        <div class="modal-body">
+          <table class="table table-sm mb-3">
+            <thead><tr><th>Examiner</th><th>Email</th><th></th></tr></thead>
+            <tbody>
+              <tr v-for="a in assignModal.assignments" :key="a.assignment_id">
+                <td>{{ a.username }}</td>
+                <td>{{ a.email }}</td>
+                <td><button class="btn btn-sm btn-outline-danger" @click="removeAssignment(a.examiner_id)">Remove</button></td>
+              </tr>
+              <tr v-if="!assignModal.assignments.length">
+                <td colspan="3" class="text-muted text-center">No examiners assigned yet</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="d-flex gap-2">
+            <select v-model="assignModal.selectedExaminerId" class="form-select">
+              <option value="">Select examiner to assign</option>
+              <option v-for="ex in availableExaminers" :key="ex.id" :value="ex.id">{{ ex.username }}</option>
+            </select>
+            <button class="btn btn-primary" @click="addAssignment">Assign</button>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
     <!-- Rubric Modal -->
     <div v-if="rubricModal.show" class="modal d-block" style="background:rgba(0,0,0,.4)">
       <div class="modal-dialog"><div class="modal-content">
@@ -117,11 +150,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { api } from '../../api.js'
 
 const exams = ref([])
 const courses = ref([])
+const examiners = ref([])
 const search = ref('')
 const msg = ref('')
 const formError = ref('')
@@ -130,11 +164,18 @@ const form = ref({ show: false, id: null, name: '', course_id: '', exam_type: ''
   booking_start: '', booking_end: '', status: 'Draft' })
 const rubricModal = ref({ show: false, examId: null, examName: '', rubrics: [] })
 const rubricForm = ref({ criterion_name: '', max_marks: '', weightage: 1 })
+const assignModal = ref({ show: false, examId: null, examName: '', assignments: [], selectedExaminerId: '' })
+
+const availableExaminers = computed(() => {
+  const assigned = new Set(assignModal.value.assignments.map(a => a.examiner_id))
+  return examiners.value.filter(ex => !assigned.has(ex.id))
+})
 
 onMounted(async () => {
   await load()
-  const cr = await api.getCourses()
+  const [cr, er] = await Promise.all([api.getCourses(), api.getExaminers()])
   courses.value = cr.data
+  examiners.value = er.data
 })
 
 async function load() {
@@ -208,6 +249,33 @@ async function addRubric() {
 async function deleteRubric(id) {
   await api.deleteRubric(id)
   await loadRubrics()
+}
+
+async function manageAssignments(e) {
+  assignModal.value = { show: true, examId: e.id, examName: e.name, assignments: [], selectedExaminerId: '' }
+  await loadAssignments()
+}
+
+async function loadAssignments() {
+  const res = await api.getExamAssignments(assignModal.value.examId)
+  assignModal.value.assignments = res.data
+}
+
+async function addAssignment() {
+  if (!assignModal.value.selectedExaminerId) return
+  try {
+    await api.assignExaminer(assignModal.value.examId, { examiner_id: assignModal.value.selectedExaminerId })
+    assignModal.value.selectedExaminerId = ''
+    await loadAssignments()
+  } catch (e) { alert(e.response?.data?.error || 'Error') }
+}
+
+async function removeAssignment(examinerId) {
+  if (!confirm('Remove this examiner from the exam?')) return
+  try {
+    await api.unassignExaminer(assignModal.value.examId, { examiner_id: examinerId })
+    await loadAssignments()
+  } catch (e) { alert(e.response?.data?.error || 'Error') }
 }
 
 function statusClass(s) {

@@ -31,6 +31,10 @@ export const api = {
   updateExaminer: (id, d) => axios.put(`/api/admin/examiners/${id}`, d, { headers: authHeaders() }),
   deleteExaminer: (id) => axios.delete(`/api/admin/examiners/${id}`, { headers: authHeaders() }),
 
+  getExamAssignments: (examId) => axios.get(`/api/admin/examinations/${examId}/examiners`, { headers: authHeaders() }),
+  assignExaminer: (examId, data) => axios.post(`/api/admin/examinations/${examId}/examiners`, data, { headers: authHeaders() }),
+  unassignExaminer: (examId, data) => axios.delete(`/api/admin/examinations/${examId}/examiners`, { data, headers: authHeaders() }),
+
   getStudents: (q = '') => axios.get(`/api/admin/students?q=${q}`, { headers: authHeaders() }),
   getAdminSlots: (examId = '') => axios.get(`/api/admin/slots${examId ? '?exam_id=' + examId : ''}`, { headers: authHeaders() }),
   getAdminBookings: (q = '') => axios.get(`/api/admin/bookings?q=${q}`, { headers: authHeaders() }),

@@ -54,7 +54,20 @@ class Examination(db.Model):
 
     rubrics = db.relationship('ExaminationRubric', backref='examination', lazy=True,
                               cascade='all, delete-orphan')
-    slots = db.relationship('ExaminationSlot', backref='examination', lazy=True)
+    slots = db.relationship('ExaminationSlot', backref='examination', lazy=True,
+                            cascade='all, delete-orphan')
+    assignments = db.relationship('ExaminerAssignment', backref='examination', lazy=True,
+                                  cascade='all, delete-orphan')
+
+
+class ExaminerAssignment(db.Model):
+    """Links an examiner to an examination — required before they can create slots."""
+    id = db.Column(db.Integer, primary_key=True)
+    exam_id = db.Column(db.Integer, db.ForeignKey('examination.id'), nullable=False)
+    examiner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('exam_id', 'examiner_id', name='uq_exam_examiner'),)
 
 
 class ExaminationRubric(db.Model):
