@@ -3,7 +3,25 @@
 }
 
 #main {
+    border: 2px solid black;
     margin-top: 10px;
+}
+
+#canvas {
+    border: 2px solid black;
+    width: 60%;
+    height: 800px;
+    margin: auto;
+}
+
+#form-body {
+    border: 1px solid #adb5bd;
+    width: 500px;
+    height: 600px;
+    margin: auto;
+    margin-top: 100px;
+    border-radius: 5px;
+    padding: 10px;
 }
 
 .heading {

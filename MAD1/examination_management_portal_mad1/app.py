@@ -254,6 +254,8 @@ def reschedule_booking(booking_id):
 @app.route("/slot/reassign/<int:slot_id>", methods=["POST"])
 def reassign_slot(slot_id):
     slot = Slot.query.get(slot_id)
+    if not slot or not request.form.get("new_examiner_id"):
+        return redirect("/admin_dashboard")
     new_examiner_id = int(request.form["new_examiner_id"])
     old_assignment = ExaminerAssignment.query.filter_by(
         examiner_id=slot.examiner_id, examination_id=slot.examination_id).first()
@@ -265,6 +267,8 @@ def reassign_slot(slot_id):
 
 @app.route("/assign_examiner", methods=["POST"])
 def assign_examiner():
+    if not request.form.get("examiner_id") or not request.form.get("examination_id"):
+        return redirect("/admin_dashboard")
     examiner_id = int(request.form["examiner_id"])
     examination_id = int(request.form["examination_id"])
     existing = ExaminerAssignment.query.filter_by(
@@ -300,6 +304,8 @@ def examiners_dashboard(examiner_id):
 @app.route("/examiner/approve/<int:examiner_id>", methods=["POST"])
 def approve_examiner(examiner_id):
     examiner = User.query.filter_by(id=examiner_id, role="examiner").first()
+    if not examiner:
+        return redirect("/admin_dashboard")
     examiner.status = "Approved"
     db.session.commit()
     return redirect("/admin_dashboard")
@@ -307,6 +313,8 @@ def approve_examiner(examiner_id):
 @app.route("/examiner/reject/<int:examiner_id>", methods=["POST"])
 def reject_examiner(examiner_id):
     examiner = User.query.filter_by(id=examiner_id, role="examiner").first()
+    if not examiner:
+        return redirect("/admin_dashboard")
     examiner.status = "Rejected"
     db.session.commit()
     return redirect("/admin_dashboard")
@@ -332,9 +340,10 @@ def examiner_slots(examiner_id):
 @app.route("/slot/create", methods=["GET", "POST"])
 def create_slot():
     if request.method == "POST":
-        if not request.form.get("examiner_id"):
+        raw_eid = request.form.get("examiner_id", "")
+        if not raw_eid.isdigit():
             return redirect("/examiner_dashboard")
-        examiner_id = int(request.form["examiner_id"])
+        examiner_id = int(raw_eid)
         exam_id = int(request.form["examination_id"])
         max_students = int(request.form["max_students"])
         exam_date_str = request.form["exam_date"]
