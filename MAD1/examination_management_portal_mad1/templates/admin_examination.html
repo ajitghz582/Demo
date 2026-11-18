@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if editing %}Edit Examination{% else %}Add Examination{% endif %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container mt-4" style="max-width:600px">
+        <h2>{% if editing %}Edit Examination{% else %}Add Examination{% endif %}</h2>
+        <form action="{% if editing %}/examination/edit/{{ exam.id }}{% else %}/examination{% endif %}" method="POST">
+            <div class="mb-3">
+                <label class="form-label">Course</label>
+                <select class="form-select" name="course_id" required>
+                    <option value="">-- Select Course --</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}"
+                        {% if editing and exam.course_id == course.id %}selected{% endif %}>
+                        {{ course.code }} — {{ course.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Examination Name</label>
+                <input type="text" class="form-control" name="name"
+                    value="{% if editing %}{{ exam.name }}{% endif %}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Type</label>
+                <select class="form-select" name="type" required>
+                    <option value="">-- Select Type --</option>
+                    {% for t in ["Viva", "Practical", "Written", "Lab"] %}
+                    <option value="{{ t }}"
+                        {% if editing and exam.type == t %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Duration (minutes)</label>
+                <input type="number" class="form-control" name="duration"
+                    value="{% if editing %}{{ exam.duration }}{% endif %}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Maximum Marks</label>
+                <input type="number" step="0.1" class="form-control" name="max_marks"
+                    value="{% if editing %}{{ exam.max_marks }}{% endif %}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Examination Date</label>
+                <input type="date" class="form-control" name="exam_date"
+                    value="{% if editing %}{{ exam.date }}{% endif %}" required>
+            </div>
+            <hr>
+            <h6>Slot &amp; Booking Windows (optional)</h6>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Slot Creation Start</label>
+                    <input type="date" class="form-control" name="slot_creation_start_date"
+                        value="{% if editing %}{{ exam.slot_creation_start_date or '' }}{% endif %}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Slot Creation End</label>
+                    <input type="date" class="form-control" name="slot_creation_end_date"
+                        value="{% if editing %}{{ exam.slot_creation_end_date or '' }}{% endif %}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Booking Start</label>
+                    <input type="date" class="form-control" name="slot_booking_start_date"
+                        value="{% if editing %}{{ exam.slot_booking_start_date or '' }}{% endif %}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Booking End</label>
+                    <input type="date" class="form-control" name="slot_booking_end_date"
+                        value="{% if editing %}{{ exam.slot_booking_end_date or '' }}{% endif %}">
+                </div>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">
+                    {% if editing %}Update{% else %}Add Examination{% endif %}
+                </button>
+                <a href="/admin_dashboard" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

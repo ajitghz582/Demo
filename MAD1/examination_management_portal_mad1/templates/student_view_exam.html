@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ examination.name }} — Slots</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/student_dashboard/{{ student_id }}">Student Dashboard</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/student_dashboard/{{ student_id }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/student_bookings/{{ student_id }}">My Bookings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/student_history/{{ student_id }}">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/student_profile/{{ student_id }}">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container px-4">
+        <h4>{{ examination.name }}</h4>
+        <table class="table table-bordered mb-4" style="max-width:500px">
+            <tr><th>Course</th><td>{{ examination.course.name }}</td></tr>
+            <tr><th>Type</th><td>{{ examination.type }}</td></tr>
+            <tr><th>Duration</th><td>{{ examination.duration }} min</td></tr>
+            <tr><th>Max Marks</th><td>{{ examination.max_marks }}</td></tr>
+            <tr><th>Date</th><td>{{ examination.date }}</td></tr>
+            <tr><th>Status</th><td>{{ examination.status }}</td></tr>
+        </table>
+
+        <h5>Available Slots</h5>
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Slot Id</th>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Seats Left</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for slot in slots %}
+                <tr>
+                    <td>{{ slot.id }}</td>
+                    <td>{{ slot.exam_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ slot.start_time.strftime('%H:%M') }}</td>
+                    <td>{{ slot.end_time.strftime('%H:%M') }}</td>
+                    <td>{{ slot.available_seats }}</td>
+                    <td>{{ slot.status }}</td>
+                    <td>
+                        {% if slot.available_seats > 0 %}
+                        <a href="/book/{{ slot.id }}/{{ student_id }}" class="btn btn-sm btn-primary">Book</a>
+                        {% else %}
+                        <span class="text-danger">Full</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted">No available slots for this exam.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="/student_dashboard/{{ student_id }}" class="btn btn-secondary">Back</a>
+    </div>
+</body>
+</html>

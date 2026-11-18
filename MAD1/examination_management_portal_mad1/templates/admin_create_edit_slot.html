@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Slot</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container mt-4" style="max-width:550px">
+        <h2>Create Slot</h2>
+        <form action="/slot/create" method="POST">
+            <input type="hidden" name="examiner_id" value="{{ examiner_id }}">
+            <div class="mb-3">
+                <label class="form-label">Examination</label>
+                <select class="form-select" name="examination_id" required>
+                    <option value="">-- Select Examination --</option>
+                    {% for exam in examinations %}
+                    <option value="{{ exam.id }}">{{ exam.name }} ({{ exam.type }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Exam Date</label>
+                <input type="date" class="form-control" name="exam_date" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Start Time</label>
+                <input type="time" class="form-control" name="start_time" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">End Time</label>
+                <input type="time" class="form-control" name="end_time" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Maximum Students</label>
+                <input type="number" class="form-control" name="max_students" min="1" required>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Create Slot</button>
+                <a href="/examiner_dashboard/{{ examiner_id }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

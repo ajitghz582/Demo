@@ -1,0 +1,2 @@
+# examination_management_portal_mad1
+The Examination Management Portal (EMP) is a web-based application designed to manage examinations efficiently. It allows Admins to manage courses, examinations, examiners, and evaluation rubrics. Examiners can register, get approval, create time slots, and evaluate students. Students can register, search for examinations, book or cancel slots, and view published results. The system supports slot scheduling, capacity management, rescheduling, and examiner reassignment. It is developed using Flask, Jinja2, HTML, CSS, Bootstrap, and SQLite.

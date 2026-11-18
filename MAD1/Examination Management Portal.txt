@@ -1,0 +1,311 @@
+Examination Management Portal
+Educational institutions require efficient systems to manage examinations involving administrators, examiners, and students. Many institutions still rely on spreadsheets, emails, or manual coordination, making it difficult to manage examination schedules, examiner availability, slot booking, student participation, and evaluation records.
+
+You are required to build an Examination Management Portal (EMP) web application that allows Admin, Examiners, and Students to interact with the system based on their roles.
+
+
+Frameworks to be used
+These are the mandatory frameworks on which the project has to be built.
+
+Flask for application back-end
+Jinja2 templating, HTML, CSS and Bootstrap for application front-end
+SQLite for database (no other database is permitted)
+JS should NOT be used for executing the core requirements
+Note
+All demos should be possible on your local machine.
+The database must be created programmatically (via table creation or model code).
+Manual database creation (such as using DB Browser for SQLite) is NOT allowed.
+
+Roles & Functionalities
+Admin
+Admin is the pre-existing superuser of the application.
+
+Can create, edit or remove courses.
+Can create, edit or remove examinations.
+Can create and manage examination rubrics.
+Can add, approve or deactivate examiners.
+Can configure examination timelines.
+Can open and close examiner slot creation.
+Can open and close student slot booking.
+Can view all examination slots.
+Can reschedule examination bookings if required.
+Can change the assigned examiner in exceptional situations.
+Can view all students, examiners, examinations and bookings.
+Can search students, examiners, examinations or bookings by name or ID.
+
+Examiner
+Examiners are faculty members responsible for conducting examinations.
+
+Can register and log in.
+Need Admin's approval to access the dashboard.
+Can view assigned examinations.
+Can create examination slots during the slot creation period.
+Can update or remove slots before booking starts.
+Can view students booked for their slots.
+Can evaluate students using examination rubrics.
+Can submit marks and remarks.
+
+Student
+Can register and log in.
+Can view available examinations.
+Can search and filter examinations.
+Can book available examination slots.
+Can cancel booking before the booking deadline.
+Can view booking status.
+Can view examination history.
+Can view published results and feedback.
+
+Key Terminologies
+Admin
+A user with the highest level of access who manages the entire examination system.
+
+
+Examiner
+A faculty member responsible for creating examination slots, conducting examinations and evaluating students.
+
+
+Student
+A registered user who books examination slots and appears for examinations.
+
+
+Course
+A course under which one or more examinations are conducted.
+
+Attributes:
+
+Course ID
+Course Code
+Course Name
+Description
+Status
+Extra fields etc.
+
+Examination
+An examination created by the Admin for a particular course.
+
+Attributes:
+
+Exam ID
+Course ID
+Examination Name
+Examination Type (Viva / Practical / Project Demo / Assessment)
+Duration
+Maximum Marks
+Slot Creation Start Date
+Slot Creation End Date
+Slot Booking Start Date
+Slot Booking End Date
+Status (Draft / Slot Creation / Booking Open / Closed / Completed)
+Extra fields etc.
+
+Examination Rubric
+Defines the evaluation criteria for an examination.
+
+Attributes:
+
+Rubric ID
+Examination ID
+Criterion Name
+Maximum Marks
+Weightage
+Description
+Extra fields etc.
+
+Examination Slot
+A time slot created by an examiner.
+
+Attributes:
+
+Slot ID
+Examination ID
+Examiner ID
+Date
+Start Time
+End Time
+Maximum Student Capacity
+Available Seats
+Status (Available / Full / Cancelled / Completed)
+Extra fields etc.
+
+Booking
+A record of a student booking an examination slot.
+
+Attributes:
+
+Booking ID
+Student ID
+Slot ID
+Booking Date
+Status (Booked / Cancelled / Completed)
+Extra fields etc.
+
+Examiner Profile
+Details of a registered examiner.
+
+Attributes:
+
+Examiner ID
+Name
+Contact Details
+Department
+Status
+Extra fields etc.
+
+Note: The above tables and fields are not exhaustive. Students can add more/less tables and fields as required.
+
+
+Similar Apps
+Moodle
+Canvas LMS
+Google Classroom
+Microsoft Teams Assignments
+HackerRank Assessments
+
+Application Wireframe
+examination-management-wireframe
+
+
+Note
+The provided wireframe is intended only to illustrate the application's flow and demonstrate navigation.
+
+Replication of the exact UI is NOT mandatory.
+
+Students are encouraged to design their own UI while maintaining the application's intended functionality and flow.
+
+
+Core Features
+1. Authentication
+Login system for Admin, Examiners and Students.
+Registration allowed for Examiners and Students.
+Admin must pre-exist in the database (no Admin registration).
+
+2. Admin Functionalities
+Admin dashboard must display:
+
+Total number of courses.
+Total number of examinations.
+Total number of examiners and students.
+Total number of examination slots.
+Total number of bookings.
+Admin can:
+
+Create and manage courses.
+Create and manage examinations.
+Create and manage examination rubrics.
+Approve new examiner registration requests.
+Open and close examiner slot creation.
+Open and close student slot booking.
+View all examination slots.
+View all bookings.
+Search students, examiners and examinations.
+Reschedule examination bookings.
+Change examiner assignment if required.
+
+3. Examiner Functionalities
+Examiner must self-register and log in.
+
+Examiner dashboard should display:
+
+Assigned examinations.
+Created examination slots.
+Number of students booked.
+Pending evaluations.
+Examiner can:
+
+Create examination slots.
+Update slots before booking starts.
+View booked students.
+Evaluate students using rubrics.
+Submit marks and remarks.
+
+4. Student Functionalities
+Students must self-register and log in.
+
+Student dashboard should display:
+
+Available examinations.
+Available examination slots.
+Upcoming examinations.
+Booked slots.
+Published results.
+Students can:
+
+Book examination slots.
+Cancel booking before the booking deadline.
+View booking history.
+View examination schedule.
+View evaluation remarks.
+Edit profile.
+Search examinations.
+
+5. Other Core Functionalities
+Examiners can create slots only during the slot creation period.
+Students can book slots only during the booking period.
+Prevent overbooking beyond slot capacity.
+Automatically close a slot when capacity is reached.
+Ensure examiners can evaluate only students booked into their own slots.
+Prevent duplicate bookings for the same examination.
+Maintain complete booking history for every student.
+Allow Admin to reschedule bookings when necessary.
+Allow Admin to change the assigned examiner if required.
+Allow Admin to view all historical examination data.
+
+Recommended and/or Optional Functionalities
+API resources to interact with examinations, examiners, students and bookings.
+Role-based access control using Flask extensions such as Flask-Login or Flask-Security.
+APIs can return JSON or be built using Flask extensions like Flask-RESTful.
+Frontend validation using HTML5 or JavaScript.
+Backend validation inside Flask controllers.
+Clean and responsive UI using Bootstrap (no other CSS framework allowed).
+Charts for examination statistics (booking trends, examiner workload, examination completion).
+Downloadable examination scorecard.
+Email notifications for booking confirmation and result publication.
+Any additional feature relevant to examination management.
+Evaluation
+Students have to create and submit a project report (not more than 5 pages) on the portal, along with the actual project submission
+The report must include the following things;
+Student details
+Project details, including the question statement and how you approached the problem statement
+AI/LLM Declaration
+Frameworks and libraries used
+ER diagram of your database, including all the tables and their relations
+API resource endpoints (if any)
+Drive link of the presentation video
+
+If a student has used any form of AI/LLM for the project, you will need to mention the extent of use in your report (click here for the doc).
+Note: Usage of AL/LLM/coding agents will be considered only if students showcase basic understanding of the code submitted.
+
+You can find a template to create the project report (click here for project report demo)
+Possible folder structure:
+
+
+
+
+All code is to be submitted on the portal in a single zip file (zipping instructions are given in the project document.
+
+Video Presentation Guidelines (Advised):
+1. A short intro (not more than 30 sec)
+
+2. How did you approach the problem statement? (30 sec)
+
+3. Highlight key features of the application (90 sec)
+
+4. Any additional feature(s) implemented other than core requirements (30 sec)
+
+
+Note:
+
+1. The final video must not exceed 5 – 10 minutes.
+
+2. Keeping your video feed on during recording (like in a screencast) is optional but recommended.
+
+
+The video must be uploaded on the student drive with access to anyone with the link and the link must be included in the report:
+This will be viewed during or before the viva, so it should be a clear explanation of your work.
+Viva: After the video explanation, you are required to give a demo of your work and answer any questions that the examiner asks:
+This includes making changes as requested and running the code for a live demo.
+Other questions may be unrelated to the project itself but are relevant to the course.
+Instructions
+This is a live document and may be updated.
+The problem statement will be frozen on or before 10/10/2026.
+Project submission must be a single zip file.
